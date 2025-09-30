@@ -5,7 +5,7 @@ services:
     container_name: db
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_DATABASE: myapp
+      MYSQL_DATABASE: pharmacy_db
     ports:
       - "3307:3306"
     volumes:
