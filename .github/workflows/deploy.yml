@@ -55,14 +55,10 @@ jobs:
             cd ~/pharmacy-project
             git pull origin main
             cd infra
-            
+
             echo "=== Docker 로그인 ==="
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-            
-            echo "=== 기존 컨테이너 중지 ==="
-            # docker-compose -f docker-compose.prod.yml down || true
-            docker-compose --env-file .env.prod -f docker-compose.prod.yml down || true
-            
+
             echo "=== .env.prod 파일 생성 ==="
             cat > .env.prod << 'EOF'
             SPRING_PROFILES_ACTIVE=prod
@@ -74,34 +70,34 @@ jobs:
             BACKEND_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/pharmacy-backend:latest
             FRONTEND_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/pharmacy-frontend:latest
             EOF
-            
+
             echo "=== .env.prod 내용 확인 ==="
             cat .env.prod
-            
+
             echo "=== 최신 이미지 pull ==="
-            # docker-compose -f docker-compose.prod.yml pull
             docker-compose --env-file .env.prod -f docker-compose.prod.yml pull
-            
-            echo "=== 컨테이너 시작 ==="
-            # docker-compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
-            docker-compose --env-file .env.prod -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
+
+            echo "=== 백엔드 컨테이너 교체 (롤링 업데이트) ==="
+            # 백엔드 컨테이너만 강제로 교체하며 의존성(Frontend)은 건드리지 않음
+            docker-compose --env-file .env.prod -f docker-compose.prod.yml up -d --force-recreate --no-deps backend
 
             echo "=== 컨테이너 시작 대기 (10초) ==="
             sleep 10
-            
+
+            echo "=== 프론트엔드 컨테이너 교체 ==="
+            # 프론트엔드 컨테이너도 강제로 교체
+            docker-compose --env-file .env.prod -f docker-compose.prod.yml up -d --force-recreate --no-deps frontend
+
             echo "=== 컨테이너 상태 확인 ==="
-            # docker-compose -f docker-compose.prod.yml ps
             docker-compose --env-file .env.prod -f docker-compose.prod.yml ps
-            
+
             echo "=== Backend 로그 (최근 30줄) ==="
-            # docker-compose -f docker-compose.prod.yml logs --tail=30 backend
             docker-compose --env-file .env.prod -f docker-compose.prod.yml logs --tail=30 backend
-      
+
             echo "=== Frontend 로그 (최근 30줄) ==="
-            # docker-compose -f docker-compose.prod.yml logs --tail=30 frontend
             docker-compose --env-file .env.prod -f docker-compose.prod.yml logs --tail=30 frontend
 
             echo "=== 사용하지 않는 이미지 정리 ==="
             docker image prune -af
-            
+
             echo "=== 배포 완료 ==="
