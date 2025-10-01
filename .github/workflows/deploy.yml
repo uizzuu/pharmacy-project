@@ -56,14 +56,15 @@ jobs:
             git pull origin main
             cd infra
             
-            # Docker 로그인
+            echo "=== Docker 로그인 ==="
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
             
-            # 기존 컨테이너 중지
+            echo "=== 기존 컨테이너 중지 ==="
             docker-compose -f docker-compose.prod.yml down || true
             
-            # .env.prod 파일 생성
-            cat > .env.prod << EOF
+            echo "=== .env.prod 파일 생성 ==="
+            cat > .env.prod << 'EOF'
+            SPRING_PROFILES_ACTIVE=prod
             RDS_ENDPOINT=${{ secrets.RDS_ENDPOINT }}
             SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }}
             SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }}
@@ -73,17 +74,28 @@ jobs:
             FRONTEND_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/pharmacy-frontend:latest
             EOF
             
-            # 최신 이미지 pull
+            echo "=== .env.prod 내용 확인 ==="
+            cat .env.prod
+            
+            echo "=== 최신 이미지 pull ==="
             docker-compose -f docker-compose.prod.yml pull
             
-            # 컨테이너 시작 (강제 재생성)
+            echo "=== 컨테이너 시작 ==="
             docker-compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
             
-            # 컨테이너 상태 확인
+            echo "=== 컨테이너 시작 대기 (10초) ==="
+            sleep 10
+            
+            echo "=== 컨테이너 상태 확인 ==="
             docker-compose -f docker-compose.prod.yml ps
             
-            # 최근 로그 확인
-            docker-compose -f docker-compose.prod.yml logs --tail=20
+            echo "=== Backend 로그 (최근 30줄) ==="
+            docker-compose -f docker-compose.prod.yml logs --tail=30 backend
             
-            # 사용하지 않는 이미지 정리
+            echo "=== Frontend 로그 (최근 30줄) ==="
+            docker-compose -f docker-compose.prod.yml logs --tail=30 frontend
+            
+            echo "=== 사용하지 않는 이미지 정리 ==="
             docker image prune -af
+            
+            echo "=== 배포 완료 ==="
