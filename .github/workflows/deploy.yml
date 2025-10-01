@@ -67,11 +67,19 @@ jobs:
             # 프로젝트 디렉토리로 이동
             cd ~/pharmacy-project
             
-            # 최신 코드 가져오기
+            # 최신 설정 파일들 가져오기 (docker-compose.yml 등)
             git pull origin main
             
-            # .env.prod 파일 생성
+            # infra 디렉토리로 이동
             cd infra
+            
+            # Docker 로그인
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+            
+            # 기존 컨테이너 중지
+            docker-compose -f docker-compose.prod.yml down || true
+            
+            # .env.prod 파일 생성
             cat > .env.prod << EOF
             RDS_ENDPOINT=${{ secrets.RDS_ENDPOINT }}
             SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }}
@@ -82,21 +90,26 @@ jobs:
             FRONTEND_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/pharmacy-frontend:latest
             EOF
             
-            # 기존 컨테이너 중지 및 제거
-            docker-compose -f docker-compose.prod.yml down
-            
-            # Docker 로그인
-            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-            
-            # 최신 이미지 강제로 pull (캐시 무시)
+            # 최신 이미지 pull
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/pharmacy-backend:latest
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/pharmacy-frontend:latest
             
-            # 새로운 컨테이너 시작
-            docker-compose -f docker-compose.prod.yml up -d
+            # 컨테이너 시작 (강제 재생성)
+            docker-compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
+            
+            # 컨테이너 시작 대기
+            sleep 10
+            
+            # 컨테이너 상태 확인
+            echo "=== 컨테이너 상태 ==="
+            docker-compose -f docker-compose.prod.yml ps
+            
+            # 로그 확인
+            echo "=== Backend 로그 ==="
+            docker-compose -f docker-compose.prod.yml logs --tail=20 backend
+            
+            echo "=== Frontend 로그 ==="
+            docker-compose -f docker-compose.prod.yml logs --tail=20 frontend
             
             # 사용하지 않는 이미지 정리
             docker image prune -af
-            
-            # 컨테이너 상태 확인
-            docker-compose -f docker-compose.prod.yml ps
