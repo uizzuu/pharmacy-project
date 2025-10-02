@@ -4,12 +4,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
-@Configuration // ⭐ 이 클래스를 설정 파일로 지정합니다.
+@Configuration
 public class RestTemplateConfig {
 
-    @Bean // ⭐ 이 메서드의 반환 객체를 스프링 Bean으로 등록합니다.
+    /**
+     * 외부 API 호출을 위한 RestTemplate Bean을 등록합니다.
+     * KakaoAddressSearchService와 같은 서비스에서 DI를 통해 사용할 수 있게 합니다.
+     */
+    @Bean
     public RestTemplate restTemplate() {
-        // 실제 API 호출에 사용될 객체 생성
         return new RestTemplate();
     }
 }

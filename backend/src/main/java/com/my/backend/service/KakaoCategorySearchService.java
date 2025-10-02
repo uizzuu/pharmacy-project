@@ -2,7 +2,6 @@ package com.my.backend.service;
 
 import com.my.backend.dto.DocumentDto;
 import com.my.backend.dto.KakaoApiResponseDto;
-// import com.my.backend.dto.OutputDto; // OutputDto 관련 메서드를 제거했으므로 더 이상 필요하지 않을 수 있습니다.
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,10 +9,13 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException; // API 클라이언트 에러(4xx) 처리를 위해 추가
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.util.CollectionUtils;
 
 import java.net.URI;
+import java.util.Collections; // Collections.emptyList() 사용을 위해 추가
 import java.util.List;
 
 @Service
@@ -29,8 +31,14 @@ public class KakaoCategorySearchService {
             "https://dapi.kakao.com/v2/local/search/category.json";
 
     public KakaoApiResponseDto resultCategorySearch(double latitude, double longitude, double radius) {
+        if(kakaoRestApiKey == null || kakaoRestApiKey.isEmpty()) {
+            log.error("카카오 API 키가 설정되지 않았습니다.");
+            return null;
+        }
+
         UriComponentsBuilder uriBuilder = UriComponentsBuilder
                 .fromUriString(KAKAO_CATEGORY_URL);
+
         // 파라미터 설정
         uriBuilder.queryParam("category_group_code", "PM9");
         uriBuilder.queryParam("x", longitude);
@@ -39,27 +47,39 @@ public class KakaoCategorySearchService {
         uriBuilder.queryParam("sort", "distance");
 
         URI uri = uriBuilder.build().encode().toUri();
+        log.info("Category Search URI: {}", uri); // 🛑 로그 추가
+
+        // ⭐ 헤더 설정 수정: KA 헤더 단순화
         HttpHeaders headers = new HttpHeaders();
-        headers.set(HttpHeaders.AUTHORIZATION,
-                "KakaoAK " + kakaoRestApiKey);
+        headers.set(HttpHeaders.AUTHORIZATION, "KakaoAK " + kakaoRestApiKey);
+        headers.set("KA", "SDK/1.0.0"); // 표준 형식으로 단순화
+
         HttpEntity<Object> httpEntity = new HttpEntity<>(headers);
 
-        return restTemplate.exchange(
-                uri,
-                HttpMethod.GET,
-                httpEntity,
-                KakaoApiResponseDto.class
-        ).getBody();
+        try {
+            return restTemplate.exchange(
+                    uri,
+                    HttpMethod.GET,
+                    httpEntity,
+                    KakaoApiResponseDto.class
+            ).getBody();
+        } catch (HttpClientErrorException e) {
+            // 4xx 에러 (401 Unauthorized, 400 Bad Request 등) 처리
+            log.error("카카오 카테고리 API 호출 중 클라이언트 에러 발생 ({}): {}", e.getStatusCode(), e.getResponseBodyAsString());
+            return null;
+        } catch (Exception e) {
+            // 기타 네트워크/IO 에러 처리
+            log.error("카카오 카테고리 API 호출 중 일반 에러 발생: {}", e.getMessage());
+            return null;
+        }
     }
 
-    /**
-     * 약국 검색 결과를 DocumentDto 리스트로 반환 (PharmacyService에서 변환 및 저장 담당)
-     */
     public List<DocumentDto> requestCategorySearchAndReturnDocuments(double latitude, double longitude, double radius) {
         KakaoApiResponseDto response = resultCategorySearch(latitude, longitude, radius);
-        return response != null ? response.getDocumentList() : List.of();
-    }
 
-    // ⭐ makeOutputDto 메서드와 private convertDto 메서드를 제거했습니다.
-    //    이 로직은 이제 PharmacyService.convertToOutputDtoAndSave에서 처리됩니다.
+        if (response == null || CollectionUtils.isEmpty(response.getDocumentList())) {
+            return Collections.emptyList();
+        }
+        return response.getDocumentList();
+    }
 }
