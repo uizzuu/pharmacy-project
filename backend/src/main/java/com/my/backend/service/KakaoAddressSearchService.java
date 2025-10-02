@@ -47,20 +47,23 @@ public class KakaoAddressSearchService {
 
         log.info("address : {}, uri : {}", address, uri);
 
-        // 헤더 만들기
+        // 🛑 수정된 부분: HTTP 헤더 설정
         HttpHeaders headers = new HttpHeaders();
-        headers.set(HttpHeaders.AUTHORIZATION,
-                "KakaoAK " + kakaoRestApiKey);
+        // Kakao Developer 문서에 따라 'Authorization: KakaoAK {REST_API_KEY}' 형식으로 헤더를 설정합니다.
+        headers.set(HttpHeaders.AUTHORIZATION, "KakaoAK " + kakaoRestApiKey);
+        
+        // 만약 여전히 401 에러가 발생한다면, 아래 KA 헤더를 추가해 보세요.
+        // headers.set("KA", "SDK/1.0.0"); 
+
         HttpEntity<Object> httpEntity = new HttpEntity<>(headers);
 
-        // 카카오 API 호출
-        return restTemplate
-                .exchange(
-                        uri,
-                        HttpMethod.GET,
-                        httpEntity,
-                        KakaoApiResponseDto.class
-                ).getBody();
+        // API 호출 및 응답
+        return restTemplate.exchange(
+                uri,
+                HttpMethod.GET,
+                httpEntity,
+                KakaoApiResponseDto.class
+        ).getBody();
     }
 
     // [추가할 코드]
