@@ -2,7 +2,6 @@ package com.my.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,6 +24,7 @@ public class Pharmacy {
     @Column(nullable = false)
     private Double distance;
 
+    // ⭐ 지도 연동을 위한 필수 필드
     @Column(nullable = false)
     private Double latitude;
 

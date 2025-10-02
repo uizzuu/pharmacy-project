@@ -2,6 +2,9 @@ package com.my.backend.controller;
 
 import com.my.backend.entity.Pharmacy;
 import com.my.backend.service.PharmacyService;
+import com.my.backend.dto.OutputDto;
+import com.my.backend.dto.SearchRequestDto;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -20,7 +23,17 @@ public class PharmacyController {
     private final PharmacyService pharmacyService;
 
     /**
-     * 약국 등록
+     * 주소 검색 및 약국 저장 (카카오 API 호출 및 DB 저장)
+     */
+    @PostMapping("/search")
+    public ResponseEntity<List<OutputDto>> searchAndSave(@RequestBody SearchRequestDto request) {
+        log.info("약국 검색 및 저장 요청: 주소={}", request.getAddress());
+        List<OutputDto> results = pharmacyService.searchAndSavePharmacies(request.getAddress());
+        return ResponseEntity.ok(results);
+    }
+
+    /**
+     * 약국 등록 (개별 저장)
      */
     @PostMapping
     public ResponseEntity<Pharmacy> createPharmacy(@RequestBody Pharmacy pharmacy) {
@@ -40,26 +53,6 @@ public class PharmacyController {
     }
 
     /**
-     * 특정 거리 이내 약국 조회
-     */
-    @GetMapping("/nearby")
-    public ResponseEntity<List<Pharmacy>> getNearbyPharmacies(@RequestParam Double distance) {
-        log.info("거리 {}km 이내 약국 조회", distance);
-        List<Pharmacy> pharmacies = pharmacyService.getPharmaciesWithinDistance(distance);
-        return ResponseEntity.ok(pharmacies);
-    }
-
-    /**
-     * 약국 상세 조회
-     */
-    @GetMapping("/{id}")
-    public ResponseEntity<Pharmacy> getPharmacy(@PathVariable Long id) {
-        log.info("약국 상세 조회: ID={}", id);
-        Pharmacy pharmacy = pharmacyService.getPharmacyById(id);
-        return ResponseEntity.ok(pharmacy);
-    }
-
-    /**
      * 약국 삭제
      */
     @DeleteMapping("/{id}")
@@ -74,6 +67,6 @@ public class PharmacyController {
      */
     @GetMapping("/health")
     public ResponseEntity<String> health() {
-        return ResponseEntity.ok("Pharmacy API is running!");
+        return ResponseEntity.ok("OK");
     }
 }
