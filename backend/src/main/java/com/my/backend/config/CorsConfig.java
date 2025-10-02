@@ -13,9 +13,8 @@ public class CorsConfig implements WebMvcConfigurer {
                 // ⭐ EC2 퍼블릭 IP와 localhost 모두 허용
                 .allowedOrigins(
                     "http://localhost:3000",
-                    "http://localhost",
                     "http://52.78.140.244",
-                    "http://52.78.140.244:80"
+                    "http://52.78.140.244:8080" 
                 )
                 .allowedMethods("GET", "POST", "DELETE", "PUT", "OPTIONS")
                 .allowedHeaders("*")
