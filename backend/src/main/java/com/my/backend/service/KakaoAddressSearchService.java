@@ -22,7 +22,7 @@ public class KakaoAddressSearchService {
     private final RestTemplate restTemplate;
 
     // 환경변수에서 ${KAKAO_REST_API_KEY} 값을 가져와서 사용
-    @Value("${KAKAO_REST_API_KEY}")
+    @Value("${MY_KAKAO_KEY}")
     private String kakaoRestApiKey;
 
     public void apikeyTest() {

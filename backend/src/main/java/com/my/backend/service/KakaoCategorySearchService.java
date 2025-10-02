@@ -22,7 +22,7 @@ import java.util.List;
 public class KakaoCategorySearchService {
     private final RestTemplate restTemplate;
 
-    @Value("${KAKAO_REST_API_KEY}")
+    @Value("${MY_KAKAO_KEY}")
     private String kakaoRestApiKey;
 
     private static final String KAKAO_CATEGORY_URL =

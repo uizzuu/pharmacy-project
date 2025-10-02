@@ -60,6 +60,6 @@ spring:
 
 # ⭐ CORS 설정을 여러 도메인 허용하도록 변경
 app:
-  allowed-origins: http://52.78.140.244,http://52.78.140.244:80,http://localhost:3000
+  allowed-origins: ${ALLOWED_ORIGINS}
 
-KAKAO_REST_API_KEY: ${KAKAO_REST_API_KEY}
+KAKAO_REST_API_KEY: ${MY_KAKAO_KEY}
