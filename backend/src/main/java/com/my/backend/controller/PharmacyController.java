@@ -17,7 +17,7 @@ import java.util.List;
 @RequestMapping("/api/pharmacies")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "${app.allowed-origins}")
+// ⭐ @CrossOrigin 제거 - CorsConfig에서 전역 설정으로 처리
 public class PharmacyController {
 
     private final PharmacyService pharmacyService;

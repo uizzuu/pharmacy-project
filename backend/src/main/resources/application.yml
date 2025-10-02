@@ -36,7 +36,7 @@ spring:
         format_sql: true
 
 app:
-  allowed-origins: http://localhost:3000
+  allowed-origins: http://localhost:3000,http://localhost
 
 KAKAO_REST_API_KEY: 3117fed0f314317d3270cd28f431d4f4
 
@@ -53,12 +53,13 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
       hibernate:
         show_sql: false
 
+# ⭐ CORS 설정을 여러 도메인 허용하도록 변경
 app:
-  allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000}
+  allowed-origins: http://52.78.140.244,http://52.78.140.244:80,http://localhost:3000
 
 KAKAO_REST_API_KEY: ${KAKAO_REST_API_KEY}
