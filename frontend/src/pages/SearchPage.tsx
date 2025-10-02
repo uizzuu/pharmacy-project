@@ -42,15 +42,11 @@ const KakaoMap: React.FC<KakaoMapProps> = ({ searchAddress, searchResults }) => 
             });
         };
         
-        // **********************************************
-        // *********** 에러 로그 개선: API 로드 실패 ***********
-        // **********************************************
         script.onerror = (e) => {
              console.error('*** 카카오 지도 API 로드 실패 (HTTP 401/404 등) ***');
              console.error('원인 확인: JavaScript 키와 웹 플랫폼 도메인(http://localhost 등)이 카카오 개발자센터에 정확히 등록되었는지 확인하세요.', e);
              setMapLoading(false);
         };
-        // **********************************************
 
         document.head.appendChild(script);
 
@@ -61,7 +57,11 @@ const KakaoMap: React.FC<KakaoMapProps> = ({ searchAddress, searchResults }) => 
 
     // 2. 지도 초기화 및 주소 검색 (지오코딩)
     const initializeMap = useCallback((address: string) => {
-        if (!mapInitialized || !window.kakao || !window.kakao.maps) return;
+        // 🛑 [수정]: services 객체가 로드되었는지 확인하는 안전장치 추가
+        if (!mapInitialized || !window.kakao || !window.kakao.maps || !window.kakao.maps.services) {
+            console.warn('Kakao Map API 또는 services 라이브러리가 아직 준비되지 않았습니다.');
+            return;
+        }
 
         const geocoder = new window.kakao.maps.services.Geocoder();
         const mapContainer = document.getElementById('kakao-map');
@@ -88,9 +88,6 @@ const KakaoMap: React.FC<KakaoMapProps> = ({ searchAddress, searchResults }) => 
                 });
                 
             } else {
-                // **********************************************
-                // ********* 에러 로그 개선: 지오코딩 실패 **********
-                // **********************************************
                 const errorMessage = `주소 검색(지오코딩) 실패! [주소: ${address}] - 상태: ${status}`;
                 console.error('*** 지도 지오코딩 에러 ***');
                 console.error(errorMessage);
@@ -102,7 +99,6 @@ const KakaoMap: React.FC<KakaoMapProps> = ({ searchAddress, searchResults }) => 
                 } else if (status === window.kakao.maps.services.Status.INVALID_REQUEST) {
                     console.error("추가 정보: 요청 파라미터가 잘못되었습니다.");
                 }
-                // **********************************************
 
                 // 지도 중심을 기본 좌표로 설정
                 const defaultCoords = new window.kakao.maps.LatLng(33.450701, 126.570667); // 제주 카카오 본사
@@ -138,11 +134,12 @@ const KakaoMap: React.FC<KakaoMapProps> = ({ searchAddress, searchResults }) => 
 
 
 // ---------------------------------------------------------------------------------------
-// SearchPage 컴포넌트는 변경된 KakaoMap 컴포넌트를 사용합니다.
+// SearchPage 컴포넌트는 변경된 KakaoMap 컴포넌트를 사용합니다. (변경 없음)
 // ---------------------------------------------------------------------------------------
 
 
 const SearchPage: React.FC = () => {
+// ... (SearchPage 컴포넌트 코드는 변경 없습니다)
     const [searchResults, setSearchResults] = useState<OutputDto[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
