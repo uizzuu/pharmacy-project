@@ -4,8 +4,6 @@ import com.my.backend.dto.DocumentDto;
 import com.my.backend.dto.OutputDto;
 import com.my.backend.entity.Pharmacy;
 import com.my.backend.repository.PharmacyRepository;
-import com.my.backend.service.KakaoAddressSearchService;
-import com.my.backend.service.KakaoCategorySearchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
