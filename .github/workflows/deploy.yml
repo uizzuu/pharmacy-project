@@ -52,9 +52,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd ~/pharmacy-project
-            git pull origin main
-            cd infra
+            cd ~/pharmacy-project/infra
 
             echo "=== Docker 로그인 ==="
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
@@ -71,24 +69,15 @@ jobs:
             FRONTEND_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/pharmacy-frontend:latest
             EOF
 
-            echo "=== .env.prod 내용 확인 ==="
-            cat .env.prod
-
-            echo "=== 최신 이미지 pull ==="
+            echo "=== 최신 이미지 pull 및 컨테이너 일괄 교체 (단일 명령어) ==="
+            # 1. pull: 최신 이미지를 먼저 다운로드
             docker-compose --env-file .env.prod -f docker-compose.prod.yml pull
+            
+            # 2. up: 모든 서비스(backend, frontend)를 한 번에 강제 재시작 및 교체
+            # 이 명령 하나로 이전의 pull, sleep, 두 번의 up 명령을 대체합니다.
+            docker-compose --env-file .env.prod -f docker-compose.prod.yml up -d --force-recreate
 
-            echo "=== 백엔드 컨테이너 교체 (롤링 업데이트) ==="
-            # 백엔드 컨테이너만 강제로 교체하며 의존성(Frontend)은 건드리지 않음
-            docker-compose --env-file .env.prod -f docker-compose.prod.yml up -d --force-recreate --no-deps backend
-
-            echo "=== 컨테이너 시작 대기 (10초) ==="
-            sleep 10
-
-            echo "=== 프론트엔드 컨테이너 교체 ==="
-            # 프론트엔드 컨테이너도 강제로 교체
-            docker-compose --env-file .env.prod -f docker-compose.prod.yml up -d --force-recreate --no-deps frontend
-
-            echo "=== 컨테이너 상태 확인 ==="
+            echo "=== 배포 및 컨테이너 상태 확인 ==="
             docker-compose --env-file .env.prod -f docker-compose.prod.yml ps
 
             echo "=== Backend 로그 (최근 30줄) ==="
